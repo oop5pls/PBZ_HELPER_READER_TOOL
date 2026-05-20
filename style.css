@@ -1,0 +1,296 @@
+/* ---- GENERAL ---- */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f8f8f8;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ---- HEADER ---- */
+header {
+    background-color: #ffffff;
+    padding: 1rem 2rem;
+    border-bottom: 2px solid #d32f2f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bank-icon {
+    color: #d32f2f;
+}
+
+.logo h1 {
+    color: #d32f2f;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+
+/* ---- MAIN CONTENT ---- */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.center-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+/*GRAPHS: desktop layout with 3 graphs*/
+.graphs {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2rem;
+    width: 90vw;
+    max-width: 3000px;
+    margin: 2.5rem auto;
+    box-sizing: border-box;
+    padding: 0 1rem;
+}
+
+
+
+/* Left section: pie chart occupies ~45% of the container */
+.graphs-left {
+    position: relative;
+    flex: 0 0 45%;
+    max-width: 45%;
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    align-items: stretch;
+    gap: 2rem;
+}
+
+/* Right section: monthly and daily graphs stacked vertically, occupies ~45% */
+.graphs-right {
+    position: relative;
+    flex: 0 0 45%;
+    max-width: 45%;
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 2rem;
+}
+
+/* Each graph item displays and centers content */
+.graph-item {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+    min-height: 300px;
+}
+
+/* placeholder removed; use .zoomed class below for click behavior */
+
+/* make graph items appear clickable */
+.graph-item:hover {
+    cursor: pointer;
+}
+
+/* click-to-zoom state */
+.graph-item.zoomed {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60vw;
+    height: 40vh;
+    z-index: 1000;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    cursor: zoom-out;
+    /*transition: all 0.3s ease;*/
+}
+
+.graph-item.zoomed::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* light semi‑transparent overlay with blur instead of dark shade */
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px);
+    z-index: -1;
+    pointer-events: none;
+}
+
+
+
+/* The image itself scales to the wrapper while preserving aspect */
+.graph-item img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 4px;
+}
+
+
+/* stats text under pie */
+.stats-text {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #333;
+    text-align: center;
+    font-family: sans-serif;
+}
+
+/* ---- MOBILE: stack all graphs vertically ---- */
+@media (max-width: 900px) {
+    .graphs {
+        width: 95vw;
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 0;
+        margin: 1.5rem auto;
+    }
+
+    .graphs-left {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .graphs-right {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .graph-item {
+        flex: 0 0 auto;
+        padding: 12px;
+        min-height: 250px;
+    }
+
+    /* disable zoom on mobile - simply ignore the zoomed class */
+    .graph-item.zoomed {
+        all: revert;
+    }
+}
+
+
+
+/* ---- UPLOAD SECTION ---- */
+.upload-section {
+    border: 2px dashed #d32f2f;
+    border-radius: 10px;
+    text-align: center;
+    padding: 2rem;
+    margin: 1rem auto;
+    width: 90%;
+    max-width: 600px;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.upload-section.dragover {
+    background-color: #fff5f5;
+    border-color: #ff7043;
+}
+
+.upload-section p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+#file-input {
+    display: none;
+}
+
+/* ---- FOOTER ---- */
+footer {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+}
+
+.footer-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Circle button */
+.circle-btn {
+    background-color: #d32f2f;
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.2s;
+}
+
+.circle-btn:hover {
+    box-shadow: 0 0 10px rgba(211, 47, 47, 0.6);
+    transform: scale(1.05);
+}
+
+/* Footer links */
+.footer-link {
+    text-decoration: none;
+    color: #d32f2f;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.footer-link:hover {
+    text-decoration: underline;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 600px) {
+    .logo h1 {
+        font-size: 1.2rem;
+    }
+
+    .upload-section {
+        max-width: 50%;
+        padding: 1.5rem;
+        width: 95%;
+    }
+
+    .footer-buttons {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+}

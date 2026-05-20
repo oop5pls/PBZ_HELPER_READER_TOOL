@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PBZ File Manager</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <!-- Inline SVG bank icon (offline safe) -->
+            <svg class="bank-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="38" height="38"
+                fill="currentColor">
+                <path d="M12 2L2 7v2h20V7L12 2zm-7 9v7H3v2h18v-2h-2v-7h-2v7h-2v-7h-2v7h-2v-7H5z" />
+            </svg>
+            <h1>Privredna Banka Urem</h1>
+        </div>
+    </header>
+
+    <main>
+        <section class="center-content" id="graph-container">
+            <p id="graph-placeholder">Upload a statement to see your spending analysis</p>
+        </section>
+
+        <section class="upload-section" id="upload-section">
+            <p>Drag & Drop your PBZ statement (PDF, CSV, or Excel) here or click to upload</p>
+            <input type="file" id="file-input" multiple />
+        </section>
+    </main>
+
+
+    <footer>
+        <div class="footer-buttons">
+            <button class="circle-btn">+</button>
+            <a href="#" class="footer-link">About</a>
+            <a href="#" class="footer-link">More</a>
+
+        </div>
+        <a class="footer-download" id="download_report" href="#" style="display:none">
+            Download Report
+        </a>
+    </footer>
+
+    <script>
+        const uploadSection = document.getElementById('upload-section');
+        const fileInput = document.getElementById('file-input');
+        const graphContainer = document.getElementById('graph-container');
+
+        uploadSection.addEventListener('click', () => fileInput.click());
+
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            await sendFiles(e.target.files);
+        });
+
+        uploadSection.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            await sendFiles(e.dataTransfer.files);
+        });
+
+        async function sendFiles(files) {
+            if (!files || files.length === 0) return;
+
+            const formData = new FormData();
+            for (const file of files) formData.append('file', file);
+
+            try {
+                graphContainer.innerHTML = '<p>Processing file...</p>';
+
+                const response = await fetch('/upload', { method: 'POST', body: formData });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ error: 'Unknown server error' }));
+                    graphContainer.innerHTML = '<p>Server Error: ' + (err.error || 'Status ' + response.status) + '</p>';
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('Server response:', result);
+
+                if (result.graph_htmls && result.graph_htmls.length > 0) {
+                    // Create the main wrapper container
+                    const graphsDiv = document.createElement('div');
+                    graphsDiv.className = 'graphs';
+
+                    // Helper function to create a graph item
+                    const createGraphItem = (item) => {
+                        const trimmed = (item || '').toString().trim();
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'graph-item';
+
+                        if (/^<img\s/i.test(trimmed) || /^<div\s/i.test(trimmed)) {
+                            const temp = document.createElement('div');
+                            temp.innerHTML = trimmed;
+                            const foundImg = temp.querySelector('img');
+                            if (foundImg && foundImg.src) {
+                                const img = document.createElement('img');
+                                // always use the standard graph-img class so pie charts behave identically
+                                img.className = 'graph-img';
+                                img.alt = foundImg.alt || 'Financial graph';
+                                img.src = foundImg.src;
+                                wrapper.appendChild(img);
+                            } else {
+                                // fallback: insert raw HTML
+                                wrapper.innerHTML = trimmed;
+                            }
+                        } else {
+                            const img = document.createElement('img');
+                            img.className = 'graph-img';
+                            img.alt = 'Financial graph';
+                            img.src = trimmed;
+                            wrapper.appendChild(img);
+                        }
+                        return wrapper;
+                    };
+
+                    // Handle layout based on number of graphs
+                    if (result.graph_htmls.length === 3) {
+                        // Desktop: pie chart on left, monthly and daily on right stacked vertically
+                        // 1st graph: pie chart
+                        const leftSection = document.createElement('div');
+                        leftSection.className = 'graphs-left';
+                        leftSection.appendChild(createGraphItem(result.graph_htmls[0]));
+                        // insert stats below pie if available
+                        if (result.graph_stats && result.graph_stats.length > 0) {
+                            const stats = result.graph_stats[0];
+                            const statsDiv = document.createElement('div');
+                            statsDiv.className = 'stats-text';
+                            statsDiv.innerHTML =
+                                `<p>Average amount spent daily: ${stats.avg_daily.toFixed(2)}</p>` +
+                                `<p>Total amount spent: ${stats.total_spent.toFixed(2)}</p>` +
+                                `<p>Total amount earned: ${stats.total_earned.toFixed(2)}</p>`;
+                            leftSection.appendChild(statsDiv);
+                        }
+                        graphsDiv.appendChild(leftSection);
+
+                        // 2nd & 3rd graphs: monthly and daily stacked
+                        const rightSection = document.createElement('div');
+                        rightSection.className = 'graphs-right';
+                        rightSection.appendChild(createGraphItem(result.graph_htmls[1]));
+                        rightSection.appendChild(createGraphItem(result.graph_htmls[2]));
+                        graphsDiv.appendChild(rightSection);
+                    } else {
+                        // Fall back to original layout for other numbers of graphs
+                        for (const item of result.graph_htmls) {
+                            graphsDiv.appendChild(createGraphItem(item));
+                        }
+                    }
+
+                    // Replace container contents atomically
+                    graphContainer.innerHTML = '';
+                    graphContainer.appendChild(graphsDiv);
+
+                    // add click-to-zoom listeners on each graph item
+                    graphsDiv.querySelectorAll('.graph-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            item.classList.toggle('zoomed');
+                        });
+                    });
+
+                    // hide upload area (optional)
+                    uploadSection.style.display = 'none';
+
+                    // show download link if report was generated
+                    if (result.report) {
+                        const downloadLink = document.getElementById('download_report');
+                        downloadLink.href = '/reports/download/' + encodeURIComponent(result.report);
+                        downloadLink.style.display = 'inline-block';
+                    }
+                } else if (result.error) {
+                    graphContainer.innerHTML = '<p>Error: ' + result.error + '</p>';
+                } else {
+                    graphContainer.innerHTML = '<p>No graphs were generated. Please check if the file contains valid data.</p>';
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+                graphContainer.innerHTML = '<p>Network/Client Error: ' + (err.message || 'Unknown error occurred') + '</p>';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

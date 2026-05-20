@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+
+# Flask / environment
+.env
+instance/
+
+# Uploaded and generated user data
+uploads/
+reports/
+*.xls
+*.xlsx
+*.csv
+*.pdf
+
+# Build artifacts
+build/
+dist/
+*.spec
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
